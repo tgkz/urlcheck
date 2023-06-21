@@ -45,13 +45,13 @@ def findurls(num, line_image):
     # find url in line and check url is valid, return number of errors
     global strcomp, line
     str = strcomp.findall(line_image)
-    line = f'{num:06}: '+line_image
+    line = f'{num:05}: '+line_image
     line_printed = False
     errcount = 0    
     if (len(str) > 0):
         #print ("**FIND ",len(str), " pieces in line:#", num)
         for w in str:
-            url = w.strip('\\\\url{').rstrip('}')
+            url = w.strip('\\\\url{').rstrip('}')  # tex file only
             cd = checkurl(url)
             if (cd != 0):
                 errcount = errcount + 1
@@ -70,7 +70,6 @@ def main():
         linenum = 1
         errors = 0
         for line in lines:
-            line_printed = False
             #print("Line:", linenum, line.rstrip())
             numerr = findurls(linenum, line)
             linenum = linenum + 1
