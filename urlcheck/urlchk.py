@@ -39,7 +39,8 @@ def checkurl(url):
     return code.returncode
 
 # strcomp: regular expression for specific source format 
-strcomp = re.compile('\\\\url{.*?}')  # expects "\url{https://URLbody}" in TeX files
+#strcomp = re.compile('\\\\url{.*?}')  # expects "\url{https://URLbody}" in TeX files
+strcomp = re.compile(r'\(https?://[^)]*\)')  # expects "(https://URLbody)" in .md files
 
 def findurls(num, line_image):
     # find url in line and check url is valid, return number of errors
@@ -49,9 +50,11 @@ def findurls(num, line_image):
     line_printed = False
     errcount = 0    
     if (len(str) > 0):
-        #print ("**FIND ",len(str), " pieces in line:#", num)
+        #print ("**Found ",len(str), "url(s) in line:#", num)
         for w in str:
-            url = w.strip('\\\\url{').rstrip('}')  # tex file only
+            #url = w.strip('\\\\url{').rstrip('}')  # tex file only
+            url = w.strip('(').rstrip(')')  # .md file only
+            #print("Checking ", url)
             cd = checkurl(url)
             if (cd != 0):
                 errcount = errcount + 1
