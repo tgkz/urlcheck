@@ -51,7 +51,7 @@ def fileinit(filetype):
             strcomp = re.compile('\\\\url{.*?}')
         case _:
             # expects "https://URLbody " in .txt normal text files
-            strcomp = re.compile(r'https?://[^ ]*')
+            strcomp = re.compile(r'https?://\S+')
 
 def geturls(line_image, filetype):
 # get urls in a line_image and return urls depending on file types
