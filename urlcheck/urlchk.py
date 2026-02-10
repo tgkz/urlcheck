@@ -19,6 +19,7 @@ def printfilename():
 
 line=""
 line_printed=False
+
 def print_line():
     global line, line_printed
     if (line_printed == False):
@@ -38,20 +39,53 @@ def checkurl(url):
         print(code.stderr, end="")
     return code.returncode
 
-# strcomp: regular expression for specific source format 
-strcomp = re.compile('\\\\url{.*?}')  # expects "\url{https://URLbody}" in TeX files
+def fileinit(filetype):
+# set regular expression accoridng to the filetype
+    global strcomp
+    match filetype:
+        case "md":
+            # expects "(https://URLbody)" in .md files
+            strcomp = re.compile(r'\(https?://[^)]*\)')
+        case "tex":
+            # expects "\url{https://URLbody}" in TeX files
+            strcomp = re.compile('\\\\url{.*?}')
+        case _:
+            # expects "https://URLbody " in .txt normal text files
+            strcomp = re.compile(r'https?://\S+')
 
-def findurls(num, line_image):
+def geturls(line_image, filetype):
+# get urls in a line_image and return urls depending on file types
+    global strcomp
+    urls = []
+    str = strcomp.findall(line_image)
+    for s in str:
+        match filetype:
+            case "tex": 
+                url = s.strip('\\\\url{').rstrip('}')  # tex file only
+            case "md":
+                url = s.strip('(').rstrip(')')  # .md file only
+            case _:
+                url = s.strip('http').rstrip(' ') # .txt 
+                url = 'http' + url
+        urls.append(url)
+        #print("Adding URL:", url)
+    #if (len(urls) > 0):
+    #    print("Going to check ", len(urls), " url")
+    return urls
+
+def findurls(num, line_image, filetype):
     # find url in line and check url is valid, return number of errors
     global strcomp, line, line_printed
-    str = strcomp.findall(line_image)
+
     line = f'{num:05}: '+line_image
     line_printed = False
     errcount = 0    
-    if (len(str) > 0):
-        #print ("**FIND ",len(str), " pieces in line:#", num)
-        for w in str:
-            url = w.strip('\\\\url{').rstrip('}')  # tex file only
+
+    urls = geturls(line_image, filetype)
+    if (len(urls) > 0):
+        #print ("**Found ",len(urls), "url(s) in line:#", num)
+        for url in urls:
+            print("Checking ", url)
             cd = checkurl(url)
             if (cd != 0):
                 errcount = errcount + 1
@@ -65,13 +99,17 @@ def main():
         sys.exit(-1)
 
     filename = sys.argv[1]
+    filetype = filename.split('.')[-1] # get file extension like .md
+    fileinit(filetype)
+
     with open(filename, mode="r", encoding="utf-8") as f:
         lines = f.readlines()
         linenum = 1
         errors = 0
         for line in lines:
             #print("Line:", linenum, line.rstrip())
-            numerr = findurls(linenum, line)
+            if (len(line) > 0):
+                numerr = findurls(linenum, line, filetype)
             linenum = linenum + 1
             errors = errors + numerr
         
